@@ -80,7 +80,7 @@ MMsys=MM_FixedVoltage( pdb_list = [ 'equilibrated.pdb', ] , residue_xml_list = [
 MMsys.set_periodic_residue(True)
 
 #***********  Initialze OpenMM API's, this method creates simulation object
-MMsys.set_platform('CUDA')   # only 'Reference' platform is currently implemented!
+MMsys.set_platform('OpenCL')   # only 'Reference' platform is currently implemented!
 
 
 # initialize Virtual Electrodes, these are electrode `sheets' that solve electrostatics for constant Voltage ...
