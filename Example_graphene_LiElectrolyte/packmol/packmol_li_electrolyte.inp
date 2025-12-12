@@ -1,0 +1,38 @@
+# Template Packmol input for a lithium electrolyte between graphene electrodes.
+# Replace file names, counts, and box limits with your own system details.
+
+tolerance 2.0
+filetype pdb
+output li_electrolyte_box.pdb
+
+# Shared box limits for reference only (Packmol ignores comment lines).
+# Update these numbers and keep every `inside box` statement below in sync because Packmol reads the values in those blocks.
+# BOX_MIN = -25.0 -25.0 -10.0
+# BOX_MAX =  25.0  25.0  10.0
+
+# Upper and lower electrodes (kept fixed)
+structure ../forcefield/graphene_top.pdb
+  fixed 0.0 0.0 0.0 0.0 0.0 0.0
+end structure
+
+structure ../forcefield/graphene_bottom.pdb
+  fixed 0.0 0.0 0.0 0.0 0.0 0.0
+end structure
+
+# Lithium salt ion pair (or separated ions)
+structure ../forcefield/li_salt.pdb
+  number 100
+  inside box -25.0 -25.0 -10.0 25.0 25.0 10.0  # BOX_MIN/BOX_MAX
+end structure
+
+# Primary solvent
+structure ../forcefield/solvent1.pdb
+  number 400
+  inside box -25.0 -25.0 -10.0 25.0 25.0 10.0  # BOX_MIN/BOX_MAX
+end structure
+
+# Optional co-solvent/additive
+structure ../forcefield/solvent2.pdb
+  number 200
+  inside box -25.0 -25.0 -10.0 25.0 25.0 10.0  # BOX_MIN/BOX_MAX
+end structure

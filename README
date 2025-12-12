@@ -17,3 +17,7 @@
    2)  Example_Electrodes_nanotube_BMIM_BF4_ACNT_FV:
          this is a Fixed-Voltage MD simulation of BMIM/BF4/ACNT electrolyte between two electrodes,
          where the Cathode has an attached carbon nanotube held at fixed voltage
+
+   3)  Example_graphene_LiElectrolyte:
+         lithium battery electrolyte between graphene electrodes with Packmol setup,
+         including both a fixed-charge workflow and a polarizable MPIDForce workflow (no Drude).
