@@ -19,7 +19,6 @@ write_charges = os.environ.get("WRITE_CHARGES", "true").lower() == "true"
 
 checkpoint = 'state.chk'
 charge_name = 'charges.dat'
-chargeFile = open(charge_name, "a")
 
 # simulation mode and voltage
 simulation_type = os.environ.get("SIM_MODE", "MC_equil")  # "MC_equil" or "Constant_V"
@@ -79,7 +78,8 @@ if path.exists(checkpoint):
 
 state = MMsys.simmd.context.getState(getEnergy=True, getForces=True, getVelocities=False, getPositions=True)
 positions = state.getPositions()
-PDBFile.writeFile(MMsys.simmd.topology, positions, open('start.pdb', 'w'))
+with open('start.pdb', 'w') as handle:
+    PDBFile.writeFile(MMsys.simmd.topology, positions, handle)
 
 append_trajectory = False
 trajectory_file_name = 'equil_MC.dcd' if simulation_type == "MC_equil" else 'FV_NVT.dcd'
@@ -124,14 +124,16 @@ for i in range(int(simulation_time_ns * 1000 / freq_traj_output_ps)):
             MMsys.Poisson_solver_fixed_voltage(Niterations=1, compute_intermediate_forces=True)
             MMsys.simmd.step(freq_charge_update_fs)
         if write_charges:
-            MMsys.write_electrode_charges(chargeFile)
+            with open(charge_name, "a") as chargeFile:
+                MMsys.write_electrode_charges(chargeFile)
     else:
         print('simulation type not recognized ...')
         sys.exit()
 
 if simulation_type == "MC_equil":
     state = MMsys.simmd.context.getState(getEnergy=True, getForces=True, getVelocities=False, getPositions=True)
-    PDBFile.writeFile(MMsys.simmd.topology, state.getPositions(), open('equilibrated.pdb', 'w'))
+    with open('equilibrated.pdb', 'w') as handle:
+        PDBFile.writeFile(MMsys.simmd.topology, state.getPositions(), handle)
 
 print('done!')
 sys.exit()

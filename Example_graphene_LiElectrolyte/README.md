@@ -5,7 +5,7 @@ This example mirrors the layout of `Example_graphene_BMIM_BF4_ACN_10pct` but is 
 - **FixedCharge**: uses the non-polarizable force field you provide.
 - **MPIDForce**: uses the polarizable MPIDForce parameters you provide (no Drude oscillators).
 
-## Preparation workflow
+## Preparation Workflow
 
 1. **Place your files**  
    Put your electrolyte building-block PDB files and force field XML files in `forcefield/`. Expected defaults:
@@ -47,6 +47,6 @@ This example mirrors the layout of `Example_graphene_BMIM_BF4_ACN_10pct` but is 
 
 ## Notes
 
-- Graphene electrode force-field files are reused from `Example_graphene_BMIM_BF4_ACN_10pct/graphene_ffdir/` by default. Override `GRAPHENE_FF_DIR` if you relocate or modify them.
+- Graphene electrode force field files are reused from `Example_graphene_BMIM_BF4_ACN_10pct/graphene_ffdir/` by default. Override `GRAPHENE_FF_DIR` if you relocate or modify them (e.g., `export GRAPHENE_FF_DIR=/path/to/graphene_ffdir` in the same shell session or prefix the run command).
 - The scripts automatically pick `equilibrated.pdb` when present; otherwise they fall back to the Packmol output.
-- Adjust `cathode_index`/`anode_index` or the Packmol box to match your electrode placement. The defaults assume two graphene sheets separated along *z* with chain indices `(0,2)` and `(1,3)`.
+- Adjust `cathode_index`/`anode_index` or the Packmol box to match your electrode placement. The defaults assume two graphene sheets separated along *z*; the cathode uses chain IDs 0 and 2, while the anode uses chain IDs 1 and 3 (the tuples list the chain indices that belong to each electrode).
