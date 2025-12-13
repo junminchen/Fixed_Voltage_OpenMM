@@ -128,15 +128,20 @@ def set_electrode_fixed_charges(MMsys, cathode_total_charge):
         Total charge on cathode in elementary charge units.
         Anode will have -cathode_total_charge.
     """
+    if MMsys.Cathode.Natoms == 0 or MMsys.Anode.Natoms == 0:
+        raise ValueError("Both electrodes must have at least one atom for constant charge mode")
+
     cathode_charge_per_atom = cathode_total_charge / MMsys.Cathode.Natoms
     anode_charge_per_atom = -cathode_total_charge / MMsys.Anode.Natoms
 
     for atom in MMsys.Cathode.electrode_atoms:
         atom.charge = cathode_charge_per_atom
+        # sigma=1.0, epsilon=0.0 for electrode atoms (no LJ interactions via nbondedForce)
         MMsys.nbondedForce.setParticleParameters(atom.atom_index, cathode_charge_per_atom, 1.0, 0.0)
 
     for atom in MMsys.Anode.electrode_atoms:
         atom.charge = anode_charge_per_atom
+        # sigma=1.0, epsilon=0.0 for electrode atoms (no LJ interactions via nbondedForce)
         MMsys.nbondedForce.setParticleParameters(atom.atom_index, anode_charge_per_atom, 1.0, 0.0)
 
     MMsys.nbondedForce.updateParametersInContext(MMsys.simmd.context)
