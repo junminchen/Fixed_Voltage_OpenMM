@@ -36,7 +36,14 @@ This example mirrors the layout of `Example_graphene_BMIM_BF4_ACN_10pct` but is 
    ```
    The resulting `FV_NVT.dcd` trajectory contains the interfacial solvation structure; `charges.dat` tracks electrode charges.
 
-5. **Polarizable MPIDForce variant**  
+5. **Constant charge mode (恒电荷模式)**  
+   Alternatively, run with fixed electrode charges instead of fixed voltage:
+   ```bash
+   SIM_MODE=Constant_Q CATHODE_CHARGE=1.0 INPUT_PDB=equilibrated.pdb python run_openMM.py
+   ```
+   This sets a uniform total charge of `CATHODE_CHARGE` (in elementary charge units) on the cathode and `-CATHODE_CHARGE` on the anode. The charges remain constant throughout the simulation. The trajectory is written to `FQ_NVT.dcd`.
+
+6. **Polarizable MPIDForce variant**  
    After building the Packmol structure, run the MPIDForce workflow with your polarizable XML files:
    ```bash
    cd ../MPIDForce

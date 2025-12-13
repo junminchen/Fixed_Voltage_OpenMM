@@ -21,8 +21,12 @@ checkpoint = 'state.chk'
 charge_name = 'charges.dat'
 
 # simulation mode and voltage
-simulation_type = os.environ.get("SIM_MODE", "MC_equil")  # "MC_equil" or "Constant_V"
+simulation_type = os.environ.get("SIM_MODE", "MC_equil")  # "MC_equil", "Constant_V", or "Constant_Q"
 Voltage = float(os.environ.get("APPLIED_VOLTAGE", 0.0))
+
+# constant charge mode: specify the total charge on cathode (anode will have -cathode_charge)
+# unit: elementary charge (e). Positive value means cathode is positively charged.
+cathode_charge = float(os.environ.get("CATHODE_CHARGE", 0.0))
 
 # electrode identifiers (chain indices)
 cathode_index = (0, 2)
@@ -90,8 +94,15 @@ with open('start.pdb', 'w') as handle:
     PDBFile.writeFile(MMsys.simmd.topology, positions, handle)
 
 append_trajectory = False
-trajectory_file_name = 'equil_MC.dcd' if simulation_type == "MC_equil" else 'FV_NVT.dcd'
-if simulation_type == "Constant_V" and path.exists(trajectory_file_name):
+if simulation_type == "MC_equil":
+    trajectory_file_name = 'equil_MC.dcd'
+elif simulation_type == "Constant_V":
+    trajectory_file_name = 'FV_NVT.dcd'
+elif simulation_type == "Constant_Q":
+    trajectory_file_name = 'FQ_NVT.dcd'
+else:
+    trajectory_file_name = 'traj.dcd'
+if simulation_type in ("Constant_V", "Constant_Q") and path.exists(trajectory_file_name):
     append_trajectory = True
 
 MMsys.set_trajectory_output(
@@ -112,6 +123,43 @@ if simulation_type == "MC_equil":
         barofreq=100,
         shiftscale=0.2
     )
+
+
+def set_electrode_fixed_charges(MMsys, cathode_total_charge):
+    """Set fixed charges uniformly on cathode and anode electrodes.
+
+    Parameters
+    ----------
+    MMsys : MM_FixedVoltage
+        The MM system object with initialized electrodes.
+    cathode_total_charge : float
+        Total charge on cathode in elementary charge units.
+        Anode will have -cathode_total_charge.
+    """
+    if MMsys.Cathode.Natoms == 0 or MMsys.Anode.Natoms == 0:
+        raise ValueError("Both electrodes must have at least one atom for constant charge mode")
+
+    cathode_charge_per_atom = cathode_total_charge / MMsys.Cathode.Natoms
+    anode_charge_per_atom = -cathode_total_charge / MMsys.Anode.Natoms
+
+    for atom in MMsys.Cathode.electrode_atoms:
+        atom.charge = cathode_charge_per_atom
+        # sigma=1.0, epsilon=0.0 for electrode atoms (no LJ interactions via nbondedForce)
+        MMsys.nbondedForce.setParticleParameters(atom.atom_index, cathode_charge_per_atom, 1.0, 0.0)
+
+    for atom in MMsys.Anode.electrode_atoms:
+        atom.charge = anode_charge_per_atom
+        # sigma=1.0, epsilon=0.0 for electrode atoms (no LJ interactions via nbondedForce)
+        MMsys.nbondedForce.setParticleParameters(atom.atom_index, anode_charge_per_atom, 1.0, 0.0)
+
+    MMsys.nbondedForce.updateParametersInContext(MMsys.simmd.context)
+    print("Constant_Q mode: Cathode total charge = {:.4f} e, Anode total charge = {:.4f} e".format(
+        cathode_total_charge, -cathode_total_charge))
+
+
+# For Constant_Q mode, set fixed charges on electrodes before MD loop
+if simulation_type == "Constant_Q":
+    set_electrode_fixed_charges(MMsys, cathode_charge)
 
 for i in range(int(simulation_time_ns * 1000 / freq_traj_output_ps)):
     state = MMsys.simmd.context.getState(getEnergy=True, getForces=True, getVelocities=False, getPositions=True)
@@ -134,6 +182,14 @@ for i in range(int(simulation_time_ns * 1000 / freq_traj_output_ps)):
         if write_charges:
             with open(charge_name, "a") as chargeFile:
                 MMsys.write_electrode_charges(chargeFile)
+
+    elif simulation_type == "Constant_Q":
+        # Constant charge mode: run MD without updating electrode charges
+        MMsys.simmd.step(int(freq_traj_output_ps * 1000))
+        if write_charges:
+            with open(charge_name, "a") as chargeFile:
+                MMsys.write_electrode_charges(chargeFile)
+
     else:
         print('simulation type not recognized ...')
         sys.exit()
